@@ -1,53 +1,77 @@
-import time
-import operator
-import pandas as pd
 import numpy as np
-import math
 
 
-def jacobi(A, B, epsilon=1e-10, max_iter=1000):
-    start = time.time()
+def jacobi_rotation(A):
+    # Отримання розміру матриці
     n = A.shape[0]
-    X = np.zeros(n)
-    for k in range(max_iter):
-        X_prev = np.copy(X)
+
+    # Ініціалізація матриць Q та R
+    Q = np.eye(n)
+    R = np.copy(A)
+
+    # Ітерації методу обертань Якобі
+    for i in range(n):
+        for j in range(i+1, n):
+            # Обчислення параметрів c та s
+            a = R[i,i]
+            b = R[j,i]
+            c = a / np.sqrt(a**2 + b**2)
+            s = -b / np.sqrt(a**2 + b**2)
+
+            # Матриця обертання
+            J = np.eye(n)
+            J[i,i] = c
+            J[j,j] = c
+            J[i,j] = s
+            J[j,i] = -s
+
+            # Оновлення матриць Q та R
+            R = np.dot(J, R)
+            Q = np.dot(Q, J.T)
+    return Q, R
+
+def jacobi_method(A, b, tol=1e-10, max_iter=1000):
+    """
+    Розв'язує систему лінійних алгебраїчних рівнянь Ax = b методом обертань Якобі.
+
+    Параметри:
+    A (ndarray): Симетрична матриця розмірності (n, n)
+    b (ndarray): Вектор вільних членів розмірності (n,)
+    tol (float): Точність, до якої потрібно розв'язати систему
+    max_iter (int): Максимальна кількість ітерацій
+
+    Повертає:
+    x (ndarray): Розв'язок системи розмірності (n,)
+    """
+
+    n = len(b)
+    x = np.zeros(n)
+
+    for i in range(max_iter):
+        # Знаходимо матрицю обертань
+        Q, R = jacobi_rotation(A)
+
+        # Обчислюємо нову матрицю A
+        A = np.dot(R, Q)
+
+        # Обчислюємо новий вектор b
+        b = np.dot(Q.T, b)
+
+        # Обчислюємо новий вектор x
+        x_new = np.zeros(n)
         for i in range(n):
-            s = 0
+            s = b[i]
             for j in range(n):
                 if i != j:
-                    s += A[i][j] * X_prev[j]
-            X[i] = (B[i] - s) / A[i][i]
-        if np.linalg.norm(X - X_prev) < epsilon:
-            end = time.time()
-            return X, end - start
+                    s -= A[i][j] * x[j]
+            x_new[i] = s / A[i][i]
+            print(x_new)
+        # Перевірка збіжності
+        if np.allclose(x, x_new, atol=tol):
+            return
 
-def jacobi_method(A, B, epsilon=1e-10, max_iter=1000):
-    start = time.time()
-    x1 = 0
-    x2 = 0
-    x3 = 0
-    for i in range(max_iter):
-        x1_new = (1/A[0][0]) * (B[0] - A[0][1] * x2 - A[0][2] * x3)
-        x2_new = (1/A[1][1]) * (B[1] - A[1][0] * x1 - A[1][2] * x3)
-        x3_new = (1/A[2][2]) * (B[2] - A[2][0] * x1 - A[2][1] * x2)
-        x1 = x1_new
-        x2 = x2_new
-        x3 = x3_new
-        if np.linalg.norm(x1_new) < epsilon:
-            break
-    end = time.time()
-    return [x1, x2, x3], end - start
+        x = x_new
 
+    # Повертаємо останній знайдений розв'язок
+    print(x)
 
-
-def repr_matrix(A, b):
-    for row in A:
-        count = 0
-        print("(", end="")
-        for entry in row:
-            entry = round(entry, 2)
-            print(entry, end=" ")
-        print(")", end="")
-        print(f"({b[count]})\n", end="")
-        count += 1
-    print("\n")
