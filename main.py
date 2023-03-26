@@ -1,6 +1,5 @@
 from gaussian_method import gaussian_elimination
 from jacobi_iteration_method import jacobi, jacobi_method
-from jacobi_method import jacobi_method
 import numpy as np
 
 def repr_vector(v, time):
@@ -42,8 +41,3 @@ repr_vector(x, time2)
 print("Jacobi method:")
 y, time0 = jacobi(A, b)
 repr_vector(y, time0)
-
-jacobi_method(A, b)
-# print("Jacobi method 2:")
-# y1, time1 = jacobi_method(A, b)
-# repr_vector(y1, time1)
