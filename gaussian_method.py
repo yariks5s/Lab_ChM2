@@ -1,41 +1,48 @@
-import numpy as np
 import math
 import time
 
+import numpy as np
+
 def gaussian_elimination(A, b):
-    A1 = A
-    start = time.time()
-    n = len(A1)
-    # Forward elimination
-    for i in range(n-1):
-        # Find the row with the largest pivot element
-        repr_matrix(A1, b)
+    time_start = time.time()
+    n = len(A)  # Розмірність матриці A
+    Ab = np.concatenate((A, b.reshape(n, 1)), axis=1)  # Об'єднуємо матрицю A та вектор b в матрицю Ab
+    P = np.eye(3)
+    repr_matrixe(A, b)
+    for i in range(n-1):  # Проходимо по всіх стовпцях матриці A (крім останнього)
+        # Знаходимо максимальний елемент за модулем у стовпці i
         max_row = i
         for j in range(i+1, n):
-            if abs(A1[j][i]) > abs(A1[max_row][i]):
+            if abs(Ab[j, i]) > abs(Ab[max_row, i]):
                 max_row = j
-        if i != max_row:
-            print(f"We changed main row to {max_row+1}")
-        # Swap the current row with the row with the largest pivot element
-        A1[[i, max_row]] = A1[[max_row, i]]
-        b[i], b[max_row] = b[max_row], b[i]
-        # Perform elimination on the current column
+                print("P matrix:")
+                P[[i, max_row]] = P[[max_row, i]]
+                print(f"We need to change rows from {i+1} to {max_row+1}")
+                repr_matrix(P)
+
+        # Міняємо місцями рядки i та max_row
+        Ab[[i, max_row]] = Ab[[max_row, i]]
+
+        Ab1 = A
+        # Елімінуємо невідомі
         for j in range(i+1, n):
-            factor = A1[j][i] / A1[i][i]
-            A1[j, i + 1:] -= factor * A1[i, i + 1:]
-            A1[j, i] = 0
-            b[j] -= factor * b[i]
-            repr_matrix(A1, b)
+            M = Ab[j, i] / Ab[i, i]  # Знаходимо множник
 
-    # Back substitution
+            Ab[j, i:] -= M * Ab[i, i:]  # Віднімаємо множиником помножені елементи рядка i з рядком j
+
+        temp = Ab[:3, :3]
+        mat = np.linalg.solve(Ab1, temp)
+        repr_matrix(mat)
+        repr_matrix(Ab)
+    # Обчислюємо розв'язки системи рівнянь методом зворотного ходу
     x = np.zeros(n)
-    x[n-1] = b[n-1] / A1[n - 1, n - 1]
-    for i in range(n-2, -1, -1):
-        x[i] = (b[i] - np.dot(A1[i, i + 1:], x[i + 1:])) / A1[i, i]
-    end = time.time()
-    return x, end - start
+    for i in range(n-1, -1, -1):
+        x[i] = (Ab[i, n] - np.dot(Ab[i, i+1:n], x[i+1:n])) / Ab[i, i]
+    time_end = time.time()
+    return x, time_start - time_end
 
-def repr_matrix(A, b):
+
+def repr_matrixe(A, b):
     count = 0
     for row in A:
         print("(", end="")
@@ -45,4 +52,14 @@ def repr_matrix(A, b):
         print(")", end="")
         print(f"({b[count]})\n", end="")
         count += 1
+    print("\n")
+
+def repr_matrix(A):
+    count = 0
+    for row in A:
+        print("(", end="")
+        for entry in row:
+            entry = round(entry, 2)
+            print(entry, end=" ")
+        print(")\n", end="")
     print("\n")

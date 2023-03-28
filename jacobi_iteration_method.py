@@ -17,7 +17,7 @@ def jacobi(A, B, epsilon=1e-10, max_iter=1000):
                 sum += abs(A[i][j])
         if abs(A[i][i]) <= sum:
             print("Method failed")
-            return
+            raise Exception("Method failed")
     for k in range(max_iter):
         X_prev = np.copy(X)
         for i in range(n):
@@ -26,8 +26,12 @@ def jacobi(A, B, epsilon=1e-10, max_iter=1000):
                 if i != j:
                     s += A[i][j] * X_prev[j]
             X[i] = (B[i] - s) / A[i][i]
+            if k == 0 and i == 0:
+                cubic_norm(X - X_prev)
             repr_vector(X)
-        if np.linalg.norm(X - X_prev) < epsilon:
+
+        if np.linalg.norm(X - X_prev, ord=3) < epsilon:
+            cubic_norm(X - X_prev)
             end = time.time()
             return X, end - start
     end = time.time()
@@ -84,3 +88,10 @@ def stop_condition(a0, a1, epsiilon):
         return True
     else:
         return False
+
+def cubic_norm(v):
+    for item in v:
+        item = abs(item)
+    norm = max(v)
+    print(f"Cubic norm: {norm}")
+    return norm
